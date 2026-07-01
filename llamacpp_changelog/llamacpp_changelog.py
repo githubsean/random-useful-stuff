@@ -1,41 +1,41 @@
 #!/usr/bin/env python3
-#
-# llamacpp_changelog.py
-#
-# Pulls the full release history (b-numbered builds) from the ggml-org/llama.cpp
-# GitHub repo and writes it out as a clean table of:
-#
-#     version, date, description
-#
-# Each "release" in llama.cpp corresponds to one CI build off master, and the
-# description is just the commit message(s) merged since the previous tag, so
-# this script effectively gives you a per-build changelog.
-#
-# Output formats:
-# - CSV (always written): description flattened to a single plain-text line.
-# - Markdown (--markdown): same flattened plain-text description. Note that
-#   markdown tables can't represent multi-line content like bullet lists, so
-#   any bullets/formatting in the original release notes are lost here.
-# - HTML (--html): preserves the original formatting (bold text, links,
-#   bullet lists) exactly as it appears on GitHub, since HTML table cells can
-#   hold arbitrary block content. Use this if you want to copy descriptions
-#   verbatim without losing formatting.
-#
-# Usage:
-#     python3 llamacpp_changelog.py
-#     python3 llamacpp_changelog.py --out changelog.csv --markdown changelog.md --html changelog.html
-#     python3 llamacpp_changelog.py --since b9800          # only fetch newer than this tag
-#     python3 llamacpp_changelog.py --token ghp_xxx         # use a GitHub token (higher rate limit)
-#     python3 llamacpp_changelog.py --max-pages 5           # limit how many pages (100/page) to pull
-#
-# Notes:
-# - Unauthenticated GitHub API calls are capped at 60 requests/hour. Each request
-#   pulls up to 100 releases, so unauthenticated you can pull ~6000 releases/hour.
-#   If you hit the limit, pass --token with a GitHub personal access token (no
-#   special scopes needed for public repos) to raise the cap to 5000 req/hour.
-# - Re-running with --since will only fetch releases newer than that tag, useful
-#   for periodic incremental updates (e.g. a cron job appending to an existing CSV).
-#
+"""
+llamacpp_changelog.py
+
+Pulls the full release history (b-numbered builds) from the ggml-org/llama.cpp
+GitHub repo and writes it out as a clean table of:
+
+    version, date, description
+
+Each "release" in llama.cpp corresponds to one CI build off master, and the
+description is just the commit message(s) merged since the previous tag, so
+this script effectively gives you a per-build changelog.
+
+Output formats:
+- CSV (always written): description flattened to a single plain-text line.
+- Markdown (--markdown): same flattened plain-text description. Note that
+  markdown tables can't represent multi-line content like bullet lists, so
+  any bullets/formatting in the original release notes are lost here.
+- HTML (--html): preserves the original formatting (bold text, links,
+  bullet lists) exactly as it appears on GitHub, since HTML table cells can
+  hold arbitrary block content. Use this if you want to copy descriptions
+  verbatim without losing formatting.
+
+Usage:
+    python3 llamacpp_changelog.py
+    python3 llamacpp_changelog.py --out changelog.csv --markdown changelog.md --html changelog.html
+    python3 llamacpp_changelog.py --since b9800          # only fetch newer than this tag
+    python3 llamacpp_changelog.py --token ghp_xxx         # use a GitHub token (higher rate limit)
+    python3 llamacpp_changelog.py --max-pages 5           # limit how many pages (100/page) to pull
+
+Notes:
+- Unauthenticated GitHub API calls are capped at 60 requests/hour. Each request
+  pulls up to 100 releases, so unauthenticated you can pull ~6000 releases/hour.
+  If you hit the limit, pass --token with a GitHub personal access token (no
+  special scopes needed for public repos) to raise the cap to 5000 req/hour.
+- Re-running with --since will only fetch releases newer than that tag, useful
+  for periodic incremental updates (e.g. a cron job appending to an existing CSV).
+"""
 
 import argparse
 import csv
@@ -85,10 +85,10 @@ def fetch_page(page, per_page=100, token=None):
 
 
 def _extract_inner(body):
-    # Pull out the raw text inside the <details>...</details> wrapper that
-    # llama.cpp's release CI puts around the actual commit message(s). Falls
-    # back to cutting off at the first platform-links heading if no <details>
-    # block is present.
+    """Pull out the raw text inside the <details>...</details> wrapper that
+    llama.cpp's release CI puts around the actual commit message(s). Falls
+    back to cutting off at the first platform-links heading if no <details>
+    block is present."""
     if not body:
         return ""
     text = body.strip()
@@ -99,8 +99,8 @@ def _extract_inner(body):
 
 
 def _linkify_refs(text):
-    # Turn bare #1234 issue/PR refs and @username mentions into markdown
-    # links, matching how GitHub renders them.
+    """Turn bare #1234 issue/PR refs and @username mentions into markdown
+    links, matching how GitHub renders them."""
     text = re.sub(
         r"(?<!\w)#(\d+)",
         rf"[#\1](https://github.com/{REPO}/pull/\1)",
@@ -115,10 +115,10 @@ def _linkify_refs(text):
 
 
 def _ensure_blank_line_before_lists(text):
-    # The python-markdown library (like most markdown parsers) only
-    # recognizes a bullet list if it's preceded by a blank line. llama.cpp's
-    # release bodies often go straight from a title line into a `* item`
-    # list with no blank line between them, so insert one where needed.
+    """The python-markdown library (like most markdown parsers) only
+    recognizes a bullet list if it's preceded by a blank line. llama.cpp's
+    release bodies often go straight from a title line into a `* item`
+    list with no blank line between them, so insert one where needed."""
     lines = text.split("\n")
     out = []
     for i, line in enumerate(lines):
@@ -131,10 +131,10 @@ def _ensure_blank_line_before_lists(text):
 
 
 def extract_details_html(body):
-    # Render the release description as real HTML (proper <ul>/<li> bullet
-    # lists, <strong> bold text, resolved links for #PR refs and @mentions)
-    # instead of leaving it as flattened markdown source. This matches how
-    # GitHub itself renders these release bodies.
+    """Render the release description as real HTML (proper <ul>/<li> bullet
+    lists, <strong> bold text, resolved links for #PR refs and @mentions)
+    instead of leaving it as flattened markdown source. This matches how
+    GitHub itself renders these release bodies."""
     inner = _extract_inner(body)
     if not inner:
         return ""
@@ -144,9 +144,9 @@ def extract_details_html(body):
 
 
 def clean_body(body):
-    # Flatten the release description to a single plain-text line, for the
-    # CSV / markdown-table outputs. Strips markdown list markers, link syntax,
-    # and any stray HTML tags, separating bullet items with ' | '.
+    """Flatten the release description to a single plain-text line, for the
+    CSV / markdown-table outputs. Strips markdown list markers, link syntax,
+    and any stray HTML tags, separating bullet items with ' | '."""
     inner = _extract_inner(body)
     if not inner:
         return ""
