@@ -19,6 +19,12 @@ REMOTE_HOST="pihole2"
 REMOTE_USER="pi"
 SSH_OPTS="-T -o BatchMode=yes -o ConnectTimeout=5"
 
+# Bail out early and loudly if the secondary is unreachable.
+if ! ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" true 2>/dev/null; then
+    echo "cannot reach $REMOTE_HOST, skipping this run" >&2
+    exit 0
+fi
+
 JAILS=$(sudo fail2ban-client status | awk -F'\t' '/Jail list/ {print $2}' | tr ',' ' ')
 
 if [ -z "$JAILS" ]; then
@@ -49,14 +55,6 @@ done
 
 if [ "$total" -eq 0 ]; then
     echo "no banned IPs found, nothing to do"
-    exit 0
-fi
-
-# Bail out early and loudly if the secondary is unreachable.
-# If you want literally one SSH connection total, remove this block
-# and rely on the error handling around the batch SSH call below.
-if ! ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" true 2>/dev/null; then
-    echo "cannot reach $REMOTE_HOST, skipping this run" >&2
     exit 0
 fi
 
