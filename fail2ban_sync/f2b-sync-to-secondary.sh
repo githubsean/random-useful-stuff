@@ -26,7 +26,7 @@ log() {
 }
 
 if [ -z "$JAILS" ]; then
-    JAILS=$(fail2ban-client status | awk -F'\t' '/Jail list/ {print $2}' | tr ',' ' ')
+    JAILS=$(sudo fail2ban-client status | awk -F'\t' '/Jail list/ {print $2}' | tr ',' ' ')
 fi
 
 if [ -z "$JAILS" ]; then
@@ -45,8 +45,8 @@ total=0
 failed=0
 
 for jail in $JAILS; do
-    ips=$(fail2ban-client status "$jail" 2>/dev/null \
-          | awk -F': ' '/Banned IP list/ {print $2}')
+    ips=$(sudo fail2ban-client status "$jail" 2>/dev/null \
+          | awk -F':' '/Banned IP list/ {print $2}')
 
     for ip in $ips; do
         [ -z "$ip" ] && continue
