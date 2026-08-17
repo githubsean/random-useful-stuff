@@ -31,6 +31,8 @@ fi
 commands=()
 total=0
 
+JAILS=""
+
 for jail in $JAILS; do
     if [ -z "$jail" ]; then
         continue
