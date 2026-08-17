@@ -1,0 +1,9 @@
+[Unit]
+Description=Sync fail2ban bans to secondary pihole
+Wants=network-online.target
+After=network-online.target fail2ban.service
+
+[Service]
+Type=oneshot
+User=pi
+ExecStart=/usr/local/bin/f2b-sync-to-secondary.sh

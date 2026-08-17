@@ -1,0 +1,11 @@
+[Unit]
+Description=Run fail2ban ban sync to secondary every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30sec
+Persistent=true
+
+[Install]
+WantedBy=timers.target
