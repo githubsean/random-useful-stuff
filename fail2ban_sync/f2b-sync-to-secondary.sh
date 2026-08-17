@@ -19,9 +19,7 @@ REMOTE_HOST="pihole2"
 REMOTE_USER="pi"
 SSH_OPTS="-T -o BatchMode=yes -o ConnectTimeout=5"
 
-if [ -z "$JAILS" ]; then
-    JAILS=$(sudo fail2ban-client status | awk -F'\t' '/Jail list/ {print $2}' | tr ',' ' ')
-fi
+JAILS=$(sudo fail2ban-client status | awk -F'\t' '/Jail list/ {print $2}' | tr ',' ' ')
 
 if [ -z "$JAILS" ]; then
     echo "no jails found, nothing to do"
@@ -30,8 +28,6 @@ fi
 
 commands=()
 total=0
-
-JAILS=""
 
 for jail in $JAILS; do
     if [ -z "$jail" ]; then
