@@ -43,14 +43,15 @@ for jail in $JAILS; do
     # Grab everything after "Banned IP list:".
     ips=$(sudo fail2ban-client status "$jail" 2>/dev/null | sed -n 's/^.*Banned IP list:[[:space:]]*//p')
 
-    for ip in $ips; do
-        if [ -z "$ip" ]; then
-            continue
-        fi
+    read -r -a ip_list <<< "$ips"
+    if [ "${#ip_list[@]}" -eq 0 ]; then
+        continue
+    fi
 
-        commands+=("set $jail banip $ip")
-        total=$((total + 1))
-    done
+    # One banip command per jail, with all of its IPs.
+    echo "Banning ${#ip_list[@]} ips in $jail"
+    commands+=("set $jail banip ${ip_list[*]}")
+    total=$((total + ${#ip_list[@]}))
 done
 
 if [ "$total" -eq 0 ]; then
