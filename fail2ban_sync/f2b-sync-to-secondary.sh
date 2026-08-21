@@ -59,13 +59,11 @@ if [ "$total" -eq 0 ]; then
     exit 0
 fi
 
-# Final command for the interactive client.
-commands+=("exit")
-
 echo "syncing $total IP(s) to $REMOTE_HOST"
+printf '%s\n' "${commands[@]}"
 
 rc=0
-printf '%s\n' "${commands[@]}" | ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" "sudo fail2ban-client -i" 2>&1 || rc=$?
+printf '%s\nexit\n' "${commands[@]}" | ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" "sudo fail2ban-client -i" 2>&1 || rc=$?
 
 echo
 
