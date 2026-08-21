@@ -40,6 +40,11 @@ for jail in $JAILS; do
         continue
     fi
 
+    # recidive re-bans its IPs into the real jails anyway; skip it.
+    if [ "$jail" = "recidive" ]; then
+        continue
+    fi
+
     # Grab everything after "Banned IP list:".
     ips=$(sudo fail2ban-client status "$jail" 2>/dev/null | sed -n 's/^.*Banned IP list:[[:space:]]*//p')
 
@@ -63,7 +68,7 @@ echo "syncing $total IP(s) to $REMOTE_HOST"
 printf '%s\n' "${commands[@]}"
 
 rc=0
-printf '%s\nexit\n' "${commands[@]}" | ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" "sudo fail2ban-client -i" 2>&1 || rc=$?
+printf '%s\n' "${commands[@]}" | ssh $SSH_OPTS "$REMOTE_USER@$REMOTE_HOST" "sudo fail2ban-client -i" 2>&1 || rc=$?
 
 echo
 
